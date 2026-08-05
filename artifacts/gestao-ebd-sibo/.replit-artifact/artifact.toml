@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Sistema EBD SIBO"
+description = "Sistema de gestão da Escola Bíblica Dominical da Segunda Igreja Batista de Osasco (SIBO). Permite que professores registrem chamadas, e que a superintendência gerencie classes, alunos, professores, encerre sessões e visualize relatórios comparativos de frequência."
+version = "1.0.0"
+id = "artifacts/gestao-ebd-sibo"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 25119
+
+[services.development]
+run = "pnpm --filter @workspace/gestao-ebd-sibo run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/gestao-ebd-sibo", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/gestao-ebd-sibo/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25119"
+BASE_PATH = "/"

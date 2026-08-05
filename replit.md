@@ -1,36 +1,53 @@
-# [Project name]
+# Sistema EBD SIBO
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+Sistema de gestão da Escola Bíblica Dominical da Segunda Igreja Batista de Osasco (SIBO). Permite que professores registrem chamadas e que a superintendência gerencie classes, alunos, professores, encerre sessões e visualize relatórios comparativos de frequência.
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- `pnpm --filter @workspace/gestao-ebd-sibo run dev` — run the frontend (port via PORT env)
+- `pnpm --filter @workspace/api-server run dev` — run the API server (port 8080)
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
 
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
-- DB: PostgreSQL + Drizzle ORM
-- Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec)
-- Build: esbuild (CJS bundle)
+- Frontend: React 19 + Vite 8 + TanStack Router v1 (SPA)
+- Database/Auth: Supabase (external — `owvzzvovlkrgclkrmcpv.supabase.co`)
+- UI: Tailwind CSS v4 + shadcn/ui components + Recharts
+- API: Express 5 (shared api-server, not used by the EBD frontend directly)
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/gestao-ebd-sibo/` — Sistema EBD frontend (main app)
+- `artifacts/gestao-ebd-sibo/src/routes/` — TanStack Router file-based routes
+- `artifacts/gestao-ebd-sibo/src/lib/ebd.ts` — core data fetching functions and types
+- `artifacts/gestao-ebd-sibo/src/integrations/supabase/` — Supabase client + DB types
+- `artifacts/gestao-ebd-sibo/src/routeTree.gen.ts` — TanStack Router route tree (manually maintained)
+
+## Routes
+
+| Path | Purpose |
+|------|---------|
+| `/` | Home — professor selects class to register attendance |
+| `/auth` | Login/signup for superintendência |
+| `/chamada?classe=<id>` | Attendance registration for a class |
+| `/painel` | Superintendência panel (classes, teachers, students, users) |
+| `/encerramento` | EBD closing bulletin + WhatsApp summary |
+| `/relatorios` | Comparative attendance charts by year |
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Migrated from Lovable (TanStack Start SSR) to pure Vite SPA — all data is fetched from Supabase on the client side, so SSR provides no benefit.
+- `createServerFn` (TanStack Start) removed; `users.functions.ts` now calls Supabase client directly.
+- `routeTree.gen.ts` is manually maintained (no TanStack Router Vite plugin); update it if routes change.
+- Logo URL uses local `/favicon.png` (original was on Lovable's CDN).
+- Supabase publishable key is a public key (safe to embed in client bundle).
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- **Professores** access the home page, pick their class, and register Sunday attendance (students + teachers + visitors).
+- **Superintendência** logs in with username/password, manages classes/teachers/students, closes EBD sessions, generates the closing bulletin (copiable to WhatsApp), and views monthly/yearly attendance comparison charts.
 
 ## User preferences
 
@@ -38,7 +55,9 @@ _Populate as you build — explicit user instructions worth remembering across s
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- If routes change, manually update `src/routeTree.gen.ts` to match.
+- The Supabase URL and publishable key are set as `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` env vars (shared environment).
+- `deleteAppUser` in `users.functions.ts` only deletes from the `profiles` table (client-side limitation — full auth user deletion requires service role key via an Edge Function).
 
 ## Pointers
 

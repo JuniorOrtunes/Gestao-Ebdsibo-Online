@@ -1,0 +1,1 @@
+- [EBD SIBO migration](ebd-sibo-migration.md) — migrated from Lovable/TanStack Start SSR to Vite SPA; all key decisions and gotchas.
