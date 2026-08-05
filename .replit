@@ -1,4 +1,4 @@
-modules = ["nodejs-24", "python-base-3.13"]
+modules = ["nodejs-20", "web", "bash"]
 
 [deployment]
 router = "application"
@@ -24,3 +24,6 @@ timeoutMs = 20000
 [userenv.shared]
 VITE_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_JQn32g7jqtdlvp_0MWr14g_ow5vIZAD"
 VITE_SUPABASE_URL = "https://owvzzvovlkrgclkrmcpv.supabase.co"
+
+[nix]
+channel = "stable-25_05"
