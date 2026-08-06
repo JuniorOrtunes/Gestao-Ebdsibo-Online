@@ -165,9 +165,9 @@ function ChamadaPage() {
     return (
       <Shell subtitle="Chamada">
         <Card>
-        <p className="text-sm text-muted-foreground">Nenhuma <span translate="no">classe</span> selecionada.</p>
+        <p className="text-sm text-muted-foreground">Nenhuma <span translate="no" className="notranslate">classe</span> selecionada.</p>
           <Link to="/" className={`${btnPrimary} mt-4`}>
-            Escolher <span translate="no">classe</span>
+            Escolher <span translate="no" className="notranslate">classe</span>
           </Link>
         </Card>
       </Shell>
@@ -184,7 +184,7 @@ function ChamadaPage() {
       subtitle={currentClass ? `Chamada — ${currentClass.name}` : "Chamada"}
       actions={
         <Link to="/" className="rounded-lg bg-white/15 px-3 py-1.5 text-sm font-semibold">
-          Trocar <span translate="no">classe</span>
+          Trocar <span translate="no" className="notranslate">classe</span>
         </Link>
       }
     >
@@ -232,7 +232,7 @@ function ChamadaPage() {
               </li>
             ))}
             {classStudents.length === 0 ? (
-              <li className="py-2 text-sm text-muted-foreground">Nenhum aluno cadastrado nesta <span translate="no">classe</span>.</li>
+              <li className="py-2 text-sm text-muted-foreground">Nenhum aluno cadastrado nesta <span translate="no" className="notranslate">classe</span>.</li>
             ) : null}
           </ul>
 
@@ -320,7 +320,7 @@ function ChamadaPage() {
           </Card>
 
           <Card>
-            <p className="text-sm text-muted-foreground">Total de presentes na <span translate="no">classe</span></p>
+            <p className="text-sm text-muted-foreground">Total de presentes na <span translate="no" className="notranslate">classe</span></p>
             <p className="text-3xl font-bold text-foreground">{totalPresentes}</p>
             <button
               type="button"

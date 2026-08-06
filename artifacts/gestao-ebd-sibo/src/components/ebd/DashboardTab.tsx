@@ -165,7 +165,7 @@ export function DashboardTab() {
       <div className="grid gap-4 lg:grid-cols-3">
         {/* Line chart: monthly by class */}
         <Card className="lg:col-span-2">
-          <h3 className="mb-4 text-sm font-bold text-foreground">Frequência por <span translate="no">Classe</span> — mês atual</h3>
+          <h3 className="mb-4 text-sm font-bold text-foreground">Frequência por <span translate="no" className="notranslate">Classe</span> — mês atual</h3>
           {loadingMonthly ? (
             <ChartSkeleton />
           ) : !monthly || monthly.points.length === 0 ? (
@@ -236,7 +236,7 @@ export function DashboardTab() {
       <div className="grid gap-4 lg:grid-cols-2">
         {/* Bar chart: % by class */}
         <Card>
-          <h3 className="mb-4 text-sm font-bold text-foreground">% Presença por <span translate="no">Classe</span> — última sessão</h3>
+          <h3 className="mb-4 text-sm font-bold text-foreground">% Presença por <span translate="no" className="notranslate">Classe</span> — última sessão</h3>
           {loadingBar ? (
             <ChartSkeleton />
           ) : classPresence.length === 0 ? (

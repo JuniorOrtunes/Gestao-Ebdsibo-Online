@@ -275,7 +275,7 @@ function Relatorios() {
             </button>
           </div>
           <div className="w-56">
-            <label className={labelCls}>Sala / <span translate="no">classe</span></label>
+            <label className={labelCls}>Sala / <span translate="no" className="notranslate">classe</span></label>
             <select className={inputCls} value={classFilter} onChange={(e) => setClassFilter(e.target.value)}>
               <option value="all">Todas as salas</option>
               {activeClasses.map((c) => (
@@ -309,7 +309,7 @@ function Relatorios() {
           <Card className="animate-fade-in">
             <h2 className="text-base font-bold">Presença por domingo — {MONTHS[month]}/{year}</h2>
             <p className="mb-4 text-sm text-muted-foreground">
-              Percentual de frequência sobre os alunos ativos matriculados em cada <span translate="no">classe</span>.
+              Percentual de frequência sobre os alunos ativos matriculados em cada <span translate="no" className="notranslate">classe</span>.
             </p>
             {weekRows.length === 0 ? (
               <p className="text-sm text-muted-foreground">Nenhuma chamada registrada neste mês.</p>
@@ -380,7 +380,7 @@ function Relatorios() {
           <Card className="animate-fade-in">
             <h2 className="text-base font-bold">Engajamento mês a mês — {year}</h2>
             <p className="mb-4 text-sm text-muted-foreground">
-              {classFilter === "all" ? <>Média geral de todas as salas e linha por <span translate="no">classe</span>.</> : <>Frequência mensal da sala selecionada.</>}
+              {classFilter === "all" ? <>Média geral de todas as salas e linha por <span translate="no" className="notranslate">classe</span>.</> : <>Frequência mensal da sala selecionada.</>}
             </p>
             <div className="h-80 w-full">
               <ResponsiveContainer width="100%" height="100%">

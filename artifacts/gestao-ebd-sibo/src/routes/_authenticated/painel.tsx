@@ -8,7 +8,7 @@ import { Card, Shell, btnDanger, btnGhost, btnPrimary, inputCls, labelCls } from
 import { useRealtimeSync } from "@/hooks/useRealtimeSync";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchClasses, fetchStudents, fetchTeachers, formatBR } from "@/lib/ebd";
-import { createAppUser, deleteAppUser, listAppUsers, updateAppUser } from "@/lib/users.functions";
+import { createAppUser, deleteAppUser, listAppUsers, updateAppUser, type AppUser } from "@/lib/users.functions";
 
 export const Route = createFileRoute("/_authenticated/painel")({
   head: () => ({
@@ -92,7 +92,7 @@ function Painel() {
             onClick={() => setTab(t)}
             className={tab === t ? btnPrimary : btnGhost}
           >
-            {t === "classes" ? <span translate="no">{TAB_LABELS[t]}</span> : TAB_LABELS[t]}
+            {t === "classes" ? <span translate="no" className="notranslate">{TAB_LABELS[t]}</span> : TAB_LABELS[t]}
           </button>
         ))}
       </div>
@@ -153,7 +153,7 @@ function ClassesTab({
         onCancel={() => setDeleteTarget(null)}
       />
       <Card>
-        <h2 className="text-base font-bold"><span translate="no">Classes</span></h2>
+        <h2 className="text-base font-bold"><span translate="no" className="notranslate">Classes</span></h2>
         <form
           className="mt-4 grid gap-3 sm:grid-cols-4"
           onSubmit={async (e) => {
@@ -378,13 +378,13 @@ function StudentsTab({
               />
             </div>
             <div>
-              <label className={labelCls}><span translate="no">Classe</span></label>
+              <label className={labelCls}><span translate="no" className="notranslate">Classe</span></label>
               <select
                 className={inputCls}
                 value={form.class_id}
                 onChange={(e) => setForm({ ...form, class_id: e.target.value })}
               >
-                <option value="" translate="no">Sem classe</option>
+                <option value="" translate="no" className="notranslate">Sem classe</option>
                 {classes.map((c) => (
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
@@ -498,13 +498,13 @@ function StudentsTab({
             </label>
             {form.is_teacher && (
               <div className="flex-1 min-w-48">
-                <label className={labelCls}><span translate="no">Classe</span> que Leciona</label>
+                <label className={labelCls}><span translate="no" className="notranslate">Classe</span> que Leciona</label>
                 <select
                   className={inputCls}
                   value={form.teacher_class_id}
                   onChange={(e) => setForm({ ...form, teacher_class_id: e.target.value })}
                 >
-                  <option value="" translate="no">Selecione a classe</option>
+                  <option value="" translate="no" className="notranslate">Selecione a classe</option>
                   {classes.map((c) => (
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
@@ -529,9 +529,9 @@ function StudentsTab({
 
         {/* Filter */}
         <div className="mt-6 max-w-64">
-            <label className={labelCls}>Filtrar por <span translate="no">classe</span></label>
+            <label className={labelCls}>Filtrar por <span translate="no" className="notranslate">classe</span></label>
           <select className={inputCls} value={filter} onChange={(e) => setFilter(e.target.value)}>
-            <option value="" translate="no">Todas as classes</option>
+            <option value="" translate="no" className="notranslate">Todas as classes</option>
             {classes.map((c) => (
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}
@@ -566,7 +566,7 @@ function StudentsTab({
                   )
                 }
               >
-                <option value="" translate="no">Sem classe</option>
+                <option value="" translate="no" className="notranslate">Sem classe</option>
                 {classes.map((c) => (
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
@@ -621,9 +621,10 @@ function SuperintendentesTab() {
   const [currentId, setCurrentId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
-  const [form, setForm] = useState({ fullName: "", username: "", password: "" });
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
+  const [showCreate, setShowCreate] = useState(false);
+  const [editTarget, setEditTarget] = useState<AppUser | null>(null);
+  const [passwordTarget, setPasswordTarget] = useState<AppUser | null>(null);
+  const [usernameTarget, setUsernameTarget] = useState<AppUser | null>(null);
 
   useEffect(() => {
     void supabase.auth.getUser().then(({ data }) => setCurrentId(data.user?.id ?? null));
@@ -647,31 +648,6 @@ function SuperintendentesTab() {
     },
   });
 
-  async function saveUser(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    setIsSaving(true);
-    try {
-      if (editingId) {
-        await updateAppUser(editingId, {
-          fullName: form.fullName,
-          username: form.username,
-          password: form.password || undefined,
-        });
-      } else {
-        if (!form.password) throw new Error("Informe uma senha com pelo menos 6 caracteres.");
-        await createAppUser(form);
-      }
-      setForm({ fullName: "", username: "", password: "" });
-      setEditingId(null);
-      await queryClient.invalidateQueries({ queryKey: ["app-users"] });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Não foi possível salvar o usuário.");
-    } finally {
-      setIsSaving(false);
-    }
-  }
-
   return (
     <>
       <ConfirmDeleteModal
@@ -680,29 +656,38 @@ function SuperintendentesTab() {
         onConfirm={() => { if (deleteTarget) del.mutate(deleteTarget); }}
         onCancel={() => setDeleteTarget(null)}
       />
+      <CreateUserModal
+        open={showCreate}
+        onClose={() => setShowCreate(false)}
+        onCreated={() => { setShowCreate(false); void queryClient.invalidateQueries({ queryKey: ["app-users"] }); }}
+      />
+      <EditUserModal
+        user={editTarget}
+        onClose={() => setEditTarget(null)}
+        onSaved={() => { setEditTarget(null); void queryClient.invalidateQueries({ queryKey: ["app-users"] }); }}
+      />
+      <ChangePasswordModal
+        user={passwordTarget}
+        onClose={() => setPasswordTarget(null)}
+        onSaved={() => { setPasswordTarget(null); void queryClient.invalidateQueries({ queryKey: ["app-users"] }); }}
+      />
+      <ChangeUsernameModal
+        user={usernameTarget}
+        onClose={() => setUsernameTarget(null)}
+        onSaved={() => { setUsernameTarget(null); void queryClient.invalidateQueries({ queryKey: ["app-users"] }); }}
+      />
       <Card>
-        <h2 className="text-base font-bold">Superintendentes</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Integrantes com acesso à superintendência. Exclua aqui contas criadas por engano.
-        </p>
-        <form className="mt-4 grid gap-3 rounded-lg border border-border bg-muted/30 p-4 sm:grid-cols-4" onSubmit={saveUser}>
+        <div className="flex items-center justify-between">
           <div>
-            <label className={labelCls}>Nome completo</label>
-            <input className={inputCls} required value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} />
+            <h2 className="text-base font-bold">Superintendentes</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Integrantes com acesso à superintendência. Crie, edite ou exclua contas.
+            </p>
           </div>
-          <div>
-            <label className={labelCls}>Nome de usuário</label>
-            <input className={inputCls} required value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} />
-          </div>
-          <div>
-            <label className={labelCls}>Senha {editingId ? "(deixe em branco para manter)" : ""}</label>
-            <input className={inputCls} type="password" minLength={6} required={!editingId} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
-          </div>
-          <div className="flex items-end gap-2">
-            <button type="submit" className={btnPrimary} disabled={isSaving}>{isSaving ? "Salvando..." : editingId ? "Salvar alterações" : "Cadastrar usuário"}</button>
-            {editingId ? <button type="button" className={btnGhost} onClick={() => { setEditingId(null); setForm({ fullName: "", username: "", password: "" }); }}>Cancelar</button> : null}
-          </div>
-        </form>
+          <button type="button" className={btnPrimary} onClick={() => setShowCreate(true)}>
+            Novo superintendente
+          </button>
+        </div>
         {error ? <p className="mt-2 text-sm font-medium text-destructive">{error}</p> : null}
         {isLoading ? (
           <div className="mt-4 space-y-2">
@@ -727,15 +712,14 @@ function SuperintendentesTab() {
                     usuário: {u.username ?? "-"} · cadastrado em {formatBR(u.created_at)}
                   </p>
                 </div>
-                <button
-                  type="button"
-                  className={btnGhost}
-                  onClick={() => {
-                    setEditingId(u.id);
-                    setForm({ fullName: u.full_name ?? "", username: u.username ?? "", password: "" });
-                  }}
-                >
+                <button type="button" className={btnGhost} onClick={() => setEditTarget(u)}>
                   Editar
+                </button>
+                <button type="button" className={btnGhost} onClick={() => setPasswordTarget(u)}>
+                  Alterar senha
+                </button>
+                <button type="button" className={btnGhost} onClick={() => setUsernameTarget(u)}>
+                  Alterar usuário
                 </button>
                 <button
                   type="button"
@@ -754,5 +738,192 @@ function SuperintendentesTab() {
         )}
       </Card>
     </>
+  );
+}
+
+// ─── Superintendentes Modals ──────────────────────────────────────────────────
+
+function ModalShell({ open, onClose, title, children }: { open: boolean; onClose: () => void; title: string; children: React.ReactNode }) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-in fade-in duration-150" onClick={onClose}>
+      <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl animate-in zoom-in-95 duration-150" onClick={(e) => e.stopPropagation()}>
+        <h2 className="text-base font-bold text-foreground">{title}</h2>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function CreateUserModal({ open, onClose, onCreated }: { open: boolean; onClose: () => void; onCreated: () => void }) {
+  const [form, setForm] = useState({ fullName: "", username: "", password: "" });
+  const [error, setError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (open) { setForm({ fullName: "", username: "", password: "" }); setError(null); }
+  }, [open]);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setIsSaving(true);
+    try {
+      await createAppUser(form);
+      onCreated();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Não foi possível criar o usuário.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  return (
+    <ModalShell open={open} onClose={onClose} title="Novo superintendente">
+      <form className="mt-4 space-y-3" onSubmit={handleSubmit}>
+        <div>
+          <label className={labelCls}>Nome completo</label>
+          <input className={inputCls} required value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} />
+        </div>
+        <div>
+          <label className={labelCls}>Nome de usuário</label>
+          <input className={inputCls} required value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} />
+        </div>
+        <div>
+          <label className={labelCls}>Senha (mínimo 6 caracteres)</label>
+          <input className={inputCls} type="password" minLength={6} required value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
+        </div>
+        {error ? <p className="text-sm font-medium text-destructive">{error}</p> : null}
+        <div className="flex justify-end gap-3 pt-2">
+          <button type="button" className={`${btnGhost} disabled:opacity-50`} onClick={onClose} disabled={isSaving}>Cancelar</button>
+          <button type="submit" className={`${btnPrimary} disabled:opacity-50`} disabled={isSaving}>{isSaving ? "Criando..." : "Cadastrar"}</button>
+        </div>
+      </form>
+    </ModalShell>
+  );
+}
+
+function EditUserModal({ user, onClose, onSaved }: { user: AppUser | null; onClose: () => void; onSaved: () => void }) {
+  const [fullName, setFullName] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (user) { setFullName(user.full_name ?? ""); setError(null); }
+  }, [user]);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!user) return;
+    setError(null);
+    setIsSaving(true);
+    try {
+      await updateAppUser(user.id, { fullName, username: user.username ?? "", password: undefined });
+      onSaved();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Não foi possível salvar.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  return (
+    <ModalShell open={user !== null} onClose={onClose} title="Editar superintendente">
+      <form className="mt-4 space-y-3" onSubmit={handleSubmit}>
+        <div>
+          <label className={labelCls}>Nome completo</label>
+          <input className={inputCls} required value={fullName} onChange={(e) => setFullName(e.target.value)} />
+        </div>
+        <p className="text-xs text-muted-foreground">Usuário: {user?.username ?? "-"}</p>
+        {error ? <p className="text-sm font-medium text-destructive">{error}</p> : null}
+        <div className="flex justify-end gap-3 pt-2">
+          <button type="button" className={`${btnGhost} disabled:opacity-50`} onClick={onClose} disabled={isSaving}>Cancelar</button>
+          <button type="submit" className={`${btnPrimary} disabled:opacity-50`} disabled={isSaving}>{isSaving ? "Salvando..." : "Salvar"}</button>
+        </div>
+      </form>
+    </ModalShell>
+  );
+}
+
+function ChangePasswordModal({ user, onClose, onSaved }: { user: AppUser | null; onClose: () => void; onSaved: () => void }) {
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (user) { setPassword(""); setError(null); }
+  }, [user]);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!user) return;
+    setError(null);
+    setIsSaving(true);
+    try {
+      await updateAppUser(user.id, { fullName: user.full_name, username: user.username ?? "", password });
+      onSaved();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Não foi possível alterar a senha.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  return (
+    <ModalShell open={user !== null} onClose={onClose} title="Alterar senha">
+      <form className="mt-4 space-y-3" onSubmit={handleSubmit}>
+        <p className="text-sm text-muted-foreground">Usuário: {user?.username ?? "-"}</p>
+        <div>
+          <label className={labelCls}>Nova senha (mínimo 6 caracteres)</label>
+          <input className={inputCls} type="password" minLength={6} required value={password} onChange={(e) => setPassword(e.target.value)} />
+        </div>
+        {error ? <p className="text-sm font-medium text-destructive">{error}</p> : null}
+        <div className="flex justify-end gap-3 pt-2">
+          <button type="button" className={`${btnGhost} disabled:opacity-50`} onClick={onClose} disabled={isSaving}>Cancelar</button>
+          <button type="submit" className={`${btnPrimary} disabled:opacity-50`} disabled={isSaving}>{isSaving ? "Salvando..." : "Salvar"}</button>
+        </div>
+      </form>
+    </ModalShell>
+  );
+}
+
+function ChangeUsernameModal({ user, onClose, onSaved }: { user: AppUser | null; onClose: () => void; onSaved: () => void }) {
+  const [username, setUsername] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (user) { setUsername(user.username ?? ""); setError(null); }
+  }, [user]);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!user) return;
+    setError(null);
+    setIsSaving(true);
+    try {
+      await updateAppUser(user.id, { fullName: user.full_name, username, password: undefined });
+      onSaved();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Não foi possível alterar o usuário.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  return (
+    <ModalShell open={user !== null} onClose={onClose} title="Alterar nome de usuário">
+      <form className="mt-4 space-y-3" onSubmit={handleSubmit}>
+        <div>
+          <label className={labelCls}>Nome de usuário</label>
+          <input className={inputCls} required value={username} onChange={(e) => setUsername(e.target.value)} />
+        </div>
+        {error ? <p className="text-sm font-medium text-destructive">{error}</p> : null}
+        <div className="flex justify-end gap-3 pt-2">
+          <button type="button" className={`${btnGhost} disabled:opacity-50`} onClick={onClose} disabled={isSaving}>Cancelar</button>
+          <button type="submit" className={`${btnPrimary} disabled:opacity-50`} disabled={isSaving}>{isSaving ? "Salvando..." : "Salvar"}</button>
+        </div>
+      </form>
+    </ModalShell>
   );
 }

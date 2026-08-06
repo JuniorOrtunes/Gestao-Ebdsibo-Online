@@ -190,12 +190,12 @@ function Encerramento() {
 
         <section className="mt-4">
           <h3 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">
-            Frequência por <span translate="no">classe</span>
+            Frequência por <span translate="no" className="notranslate">classe</span>
           </h3>
           <table className="mt-2 w-full text-sm">
             <thead>
               <tr className="border-b border-border text-left text-xs uppercase text-muted-foreground">
-                <th className="py-1"><span translate="no">Classe</span></th>
+                <th className="py-1"><span translate="no" className="notranslate">Classe</span></th>
                 <th className="py-1 text-center">Matriculados</th>
                 <th className="py-1 text-center">Presentes</th>
                 <th className="py-1 text-center">Visitantes</th>
