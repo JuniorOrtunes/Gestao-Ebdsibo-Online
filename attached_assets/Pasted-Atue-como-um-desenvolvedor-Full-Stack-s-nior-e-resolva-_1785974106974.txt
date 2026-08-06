@@ -1,0 +1,35 @@
+Atue como um desenvolvedor Full-Stack sênior e resolva as 3 demandas/erros abaixo no projeto:
+
+---
+
+### 1. [BANCO DE DADOS / ORM] Erro na coluna 'cep' em Alunos
+- **Problema:** Ao tentar adicionar um aluno, ocorre o erro: "Could not find the 'cep' column of 'students' in the schema cache".
+- **Ação necessária:**
+  - Verifique se a coluna `cep` está presente na tabela `students` no banco de dados. Se não estiver, crie a migration ou ajuste o schema.
+  - Se a coluna já existir no banco, atualize/recarregue o cache do schema do ORM (Drizzle, Prisma, TypeORM, Supabase ou SQL puro) para que a aplicação reconheça o campo `cep`.
+  - Garanta que o fluxo de cadastro e edição de alunos suporte a leitura e escrita do campo `cep`.
+
+---
+
+### 2. [FRONTEND / TRADUÇÃO] Prevenir tradução da palavra "Classe"
+- **Problema:** Quando o navegador traduz a página para o português, a palavra "Classe" é alterada para "Aula", alterando o contexto da aplicação.
+- **Ação necessária:**
+  - Aplique o atributo `translate="no"` ou a classe CSS `notranslate` (dependendo do padrão do projeto) nos elementos HTML/JSX onde a palavra "Classe" (ou "Classes") aparece na interface.
+  - Exemplo: `<span translate="no">Classe</span>` ou `<div class="notranslate">Classe</div>`.
+  - Garanta que as ferramentas de tradução automática do navegador (Google Translate, Edge Translate, etc.) preservem a palavra original.
+
+---
+
+### 3. [FUNCIONALIDADE / CRUD] Gestão de Usuários na tela de Superintendentes
+- **Problema:** A tela de Superintendentes precisa de gerenciamento completo de usuários.
+- **Ação necessária:**
+  - Na tela de Superintendentes, adicione/complete as seguintes funcionalidades:
+    1. **Cadastrar Novo Usuário:** Formulário de criação com validação dos dados necessários.
+    2. **Excluir Usuário:** Botão de exclusão com modal/confirmação de segurança.
+    3. **Alterar Senha:** Opção para redefinir a senha de um usuário selecionado.
+    4. **Alterar Nome de Usuário:** Opção para editar e salvar o nome de usuário (username/fullname).
+  - Certifique-se de implementar ou integrar as rotas da API (backend) correspondentes para realizar essas ações no banco de dados de forma segura.
+
+---
+
+Ao finalizar, revise as alterações, rode os testes/verificações e confirme se todas as telas estão operacionais e sem regressões.
