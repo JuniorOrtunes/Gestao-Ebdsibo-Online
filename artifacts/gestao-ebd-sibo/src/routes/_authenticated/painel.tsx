@@ -8,7 +8,7 @@ import { Card, Shell, btnDanger, btnGhost, btnPrimary, inputCls, labelCls } from
 import { useRealtimeSync } from "@/hooks/useRealtimeSync";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchClasses, fetchStudents, fetchTeachers, formatBR } from "@/lib/ebd";
-import { deleteAppUser, listAppUsers } from "@/lib/users.functions";
+import { createAppUser, deleteAppUser, listAppUsers, updateAppUser } from "@/lib/users.functions";
 
 export const Route = createFileRoute("/_authenticated/painel")({
   head: () => ({
@@ -92,7 +92,7 @@ function Painel() {
             onClick={() => setTab(t)}
             className={tab === t ? btnPrimary : btnGhost}
           >
-            {TAB_LABELS[t]}
+            {t === "classes" ? <span translate="no">{TAB_LABELS[t]}</span> : TAB_LABELS[t]}
           </button>
         ))}
       </div>
@@ -153,7 +153,7 @@ function ClassesTab({
         onCancel={() => setDeleteTarget(null)}
       />
       <Card>
-        <h2 className="text-base font-bold">Classes</h2>
+        <h2 className="text-base font-bold"><span translate="no">Classes</span></h2>
         <form
           className="mt-4 grid gap-3 sm:grid-cols-4"
           onSubmit={async (e) => {
@@ -293,6 +293,7 @@ function StudentsTab({
   const [cepError, setCepError] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const list = students.filter((s) => !filter || s.class_id === filter);
 
@@ -339,8 +340,7 @@ function StudentsTab({
           className="mt-4 space-y-4"
           onSubmit={async (e) => {
             e.preventDefault();
-            const ok = await run(() =>
-              supabase.from("students").insert({
+            const studentData = {
                 full_name: form.full_name,
                 class_id: form.class_id || null,
                 birth_date: form.birth_date || null,
@@ -354,9 +354,16 @@ function StudentsTab({
                 city: form.city || null,
                 is_teacher: form.is_teacher,
                 teacher_class_id: form.is_teacher && form.teacher_class_id ? form.teacher_class_id : null,
-              }),
+              };
+            const ok = await run(() =>
+              editingId
+                ? supabase.from("students").update(studentData).eq("id", editingId)
+                : supabase.from("students").insert(studentData),
             );
-            if (ok) setForm(EMPTY_STUDENT_FORM);
+            if (ok) {
+              setForm({ ...EMPTY_STUDENT_FORM });
+              setEditingId(null);
+            }
           }}
         >
           {/* Basic info */}
@@ -371,13 +378,13 @@ function StudentsTab({
               />
             </div>
             <div>
-              <label className={labelCls}>Classe</label>
+              <label className={labelCls}><span translate="no">Classe</span></label>
               <select
                 className={inputCls}
                 value={form.class_id}
                 onChange={(e) => setForm({ ...form, class_id: e.target.value })}
               >
-                <option value="">Sem classe</option>
+                <option value="" translate="no">Sem classe</option>
                 {classes.map((c) => (
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
@@ -491,13 +498,13 @@ function StudentsTab({
             </label>
             {form.is_teacher && (
               <div className="flex-1 min-w-48">
-                <label className={labelCls}>Classe que Leciona</label>
+                <label className={labelCls}><span translate="no">Classe</span> que Leciona</label>
                 <select
                   className={inputCls}
                   value={form.teacher_class_id}
                   onChange={(e) => setForm({ ...form, teacher_class_id: e.target.value })}
                 >
-                  <option value="">Selecione a classe</option>
+                  <option value="" translate="no">Selecione a classe</option>
                   {classes.map((c) => (
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
@@ -506,18 +513,25 @@ function StudentsTab({
             )}
           </div>
 
+          <div className="flex flex-wrap gap-2">
           <button type="submit" className={btnPrimary}>
-            Adicionar aluno
+            {editingId ? "Salvar alterações" : "Adicionar aluno"}
           </button>
+          {editingId ? (
+            <button type="button" className={btnGhost} onClick={() => { setEditingId(null); setForm({ ...EMPTY_STUDENT_FORM }); }}>
+              Cancelar edição
+            </button>
+          ) : null}
+          </div>
         </form>
 
         {error ? <p className="mt-2 text-sm text-destructive">{error}</p> : null}
 
         {/* Filter */}
         <div className="mt-6 max-w-64">
-          <label className={labelCls}>Filtrar por classe</label>
+            <label className={labelCls}>Filtrar por <span translate="no">classe</span></label>
           <select className={inputCls} value={filter} onChange={(e) => setFilter(e.target.value)}>
-            <option value="">Todas as classes</option>
+            <option value="" translate="no">Todas as classes</option>
             {classes.map((c) => (
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}
@@ -552,11 +566,36 @@ function StudentsTab({
                   )
                 }
               >
-                <option value="">Sem classe</option>
+                <option value="" translate="no">Sem classe</option>
                 {classes.map((c) => (
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
               </select>
+              <button
+                type="button"
+                className={btnGhost}
+                onClick={() => {
+                  setEditingId(s.id);
+                  setForm({
+                    full_name: s.full_name,
+                    class_id: s.class_id ?? "",
+                    birth_date: s.birth_date ?? "",
+                    wedding_date: s.wedding_date ?? "",
+                    phone: s.phone ?? "",
+                    cep: s.cep ?? "",
+                    street: s.street ?? "",
+                    number: s.number ?? "",
+                    complement: s.complement ?? "",
+                    neighborhood: s.neighborhood ?? "",
+                    city: s.city ?? "",
+                    is_teacher: s.is_teacher,
+                    teacher_class_id: s.teacher_class_id ?? "",
+                  });
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+              >
+                Editar
+              </button>
               <button
                 type="button"
                 className={btnDanger}
@@ -582,6 +621,9 @@ function SuperintendentesTab() {
   const [currentId, setCurrentId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [form, setForm] = useState({ fullName: "", username: "", password: "" });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     void supabase.auth.getUser().then(({ data }) => setCurrentId(data.user?.id ?? null));
@@ -605,6 +647,31 @@ function SuperintendentesTab() {
     },
   });
 
+  async function saveUser(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setIsSaving(true);
+    try {
+      if (editingId) {
+        await updateAppUser(editingId, {
+          fullName: form.fullName,
+          username: form.username,
+          password: form.password || undefined,
+        });
+      } else {
+        if (!form.password) throw new Error("Informe uma senha com pelo menos 6 caracteres.");
+        await createAppUser(form);
+      }
+      setForm({ fullName: "", username: "", password: "" });
+      setEditingId(null);
+      await queryClient.invalidateQueries({ queryKey: ["app-users"] });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Não foi possível salvar o usuário.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
   return (
     <>
       <ConfirmDeleteModal
@@ -618,6 +685,24 @@ function SuperintendentesTab() {
         <p className="mt-1 text-sm text-muted-foreground">
           Integrantes com acesso à superintendência. Exclua aqui contas criadas por engano.
         </p>
+        <form className="mt-4 grid gap-3 rounded-lg border border-border bg-muted/30 p-4 sm:grid-cols-4" onSubmit={saveUser}>
+          <div>
+            <label className={labelCls}>Nome completo</label>
+            <input className={inputCls} required value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} />
+          </div>
+          <div>
+            <label className={labelCls}>Nome de usuário</label>
+            <input className={inputCls} required value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} />
+          </div>
+          <div>
+            <label className={labelCls}>Senha {editingId ? "(deixe em branco para manter)" : ""}</label>
+            <input className={inputCls} type="password" minLength={6} required={!editingId} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
+          </div>
+          <div className="flex items-end gap-2">
+            <button type="submit" className={btnPrimary} disabled={isSaving}>{isSaving ? "Salvando..." : editingId ? "Salvar alterações" : "Cadastrar usuário"}</button>
+            {editingId ? <button type="button" className={btnGhost} onClick={() => { setEditingId(null); setForm({ fullName: "", username: "", password: "" }); }}>Cancelar</button> : null}
+          </div>
+        </form>
         {error ? <p className="mt-2 text-sm font-medium text-destructive">{error}</p> : null}
         {isLoading ? (
           <div className="mt-4 space-y-2">
@@ -642,6 +727,16 @@ function SuperintendentesTab() {
                     usuário: {u.username ?? "-"} · cadastrado em {formatBR(u.created_at)}
                   </p>
                 </div>
+                <button
+                  type="button"
+                  className={btnGhost}
+                  onClick={() => {
+                    setEditingId(u.id);
+                    setForm({ fullName: u.full_name ?? "", username: u.username ?? "", password: "" });
+                  }}
+                >
+                  Editar
+                </button>
                 <button
                   type="button"
                   className={`${btnDanger} disabled:opacity-50`}

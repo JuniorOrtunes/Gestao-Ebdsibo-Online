@@ -22,7 +22,7 @@ description: Key decisions, gotchas, and architecture notes for the Sistema EBD 
 - `useRealtimeSync` hook (src/hooks/useRealtimeSync.ts) subscribes to all relevant tables and invalidates TanStack Query keys. Called from `Painel` component (authenticated layout).
 
 ## deleteAppUser limitation
-- Client-side only deletes from `profiles` table. Auth user record in Supabase Auth remains. Full deletion requires a Supabase Edge Function with service role key.
+- Administrative user CRUD now runs through the Express API server with the Supabase service-role secret; the frontend sends only the authenticated session token.
 
 ## Logo
 - Local `/favicon.png` used (original was Lovable CDN).

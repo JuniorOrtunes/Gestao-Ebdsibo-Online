@@ -51,7 +51,7 @@ function Index() {
           </p>
           <div className="mt-4">
             <label className={labelCls} htmlFor="classe">
-              Classe
+              <span translate="no">Classe</span>
             </label>
             <select
               id="classe"
@@ -59,7 +59,7 @@ function Index() {
               value={classId}
               onChange={(e) => setClassId(e.target.value)}
             >
-              <option value="">{isLoading ? "Carregando..." : "Selecione a classe"}</option>
+              <option value="" translate="no">{isLoading ? "Carregando..." : "Selecione a classe"}</option>
               {classes
                 .filter((c) => c.active)
                 .map((c) => (

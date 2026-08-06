@@ -15,7 +15,7 @@ Sistema de gestão da Escola Bíblica Dominical da Segunda Igreja Batista de Osa
 - Frontend: React 19 + Vite 8 + TanStack Router v1 (SPA)
 - Database/Auth: Supabase (external — `owvzzvovlkrgclkrmcpv.supabase.co`)
 - UI: Tailwind CSS v4 + shadcn/ui components + Recharts
-- API: Express 5 (shared api-server, not used by the EBD frontend directly)
+- API: Express 5 (admin-only Supabase Auth operations for superintendents)
 
 ## Where things live
 
@@ -57,7 +57,7 @@ _Populate as you build — explicit user instructions worth remembering across s
 
 - If routes change, manually update `src/routeTree.gen.ts` to match.
 - The Supabase URL and publishable key are set as `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` env vars (shared environment).
-- `deleteAppUser` in `users.functions.ts` only deletes from the `profiles` table (client-side limitation — full auth user deletion requires service role key via an Edge Function).
+- Administrative user operations use the API server with `SUPABASE_SERVICE_ROLE_KEY`; the browser only sends the authenticated session token and never receives the service key.
 
 ## Pointers
 
